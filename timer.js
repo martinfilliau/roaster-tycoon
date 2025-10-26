@@ -1,20 +1,4 @@
-// Timer state
-let elapsedSeconds = 0;
-let isRunning = false;
-let intervalId = null;
-let firstCrackTime = null;
-
-// DOM elements
-const timerDisplay = document.getElementById("timerDisplay");
-const startBtn = document.getElementById("startBtn");
-const pauseBtn = document.getElementById("pauseBtn");
-const resetBtn = document.getElementById("resetBtn");
-const crackBtn = document.getElementById("crackBtn");
-const crackTimeDisplay = document.getElementById("crackTime");
-const devTimeDisplay = document.getElementById("devTime");
-const devPercentDisplay = document.getElementById("devPercent");
-const targetTimeInput = document.getElementById("targetTime");
-const targetDisplay = document.getElementById("targetDisplay");
+// ===== CORE LOGIC (Pure functions - testable) =====
 
 /**
  * Format seconds to MM:SS
@@ -50,90 +34,121 @@ function calculateDevelopmentTime(totalSeconds, crackSeconds) {
   return totalSeconds - crackSeconds;
 }
 
-function updateDisplay() {
-  timerDisplay.textContent = formatTime(elapsedSeconds);
+// ===== UI LOGIC (Browser only) =====
 
-  if (firstCrackTime !== null) {
-    const developmentTime = calculateDevelopmentTime(
-      elapsedSeconds,
-      firstCrackTime,
-    );
-    devTimeDisplay.textContent = formatTime(developmentTime);
+function initializeTimer() {
+  // Timer state
+  let elapsedSeconds = 0;
+  let isRunning = false;
+  let intervalId = null;
+  let firstCrackTime = null;
 
+  // DOM elements
+  const timerDisplay = document.getElementById("timerDisplay");
+  const startBtn = document.getElementById("startBtn");
+  const pauseBtn = document.getElementById("pauseBtn");
+  const resetBtn = document.getElementById("resetBtn");
+  const crackBtn = document.getElementById("crackBtn");
+  const crackTimeDisplay = document.getElementById("crackTime");
+  const devTimeDisplay = document.getElementById("devTime");
+  const devPercentDisplay = document.getElementById("devPercent");
+  const targetTimeInput = document.getElementById("targetTime");
+  const targetDisplay = document.getElementById("targetDisplay");
+
+  function updateDisplay() {
+    timerDisplay.textContent = formatTime(elapsedSeconds);
+
+    if (firstCrackTime !== null) {
+      const developmentTime = calculateDevelopmentTime(
+        elapsedSeconds,
+        firstCrackTime,
+      );
+      devTimeDisplay.textContent = formatTime(developmentTime);
+
+      const targetMinutes = parseFloat(targetTimeInput.value);
+      const devPercent = calculateDevelopmentPercentage(
+        developmentTime,
+        targetMinutes,
+      );
+      devPercentDisplay.textContent = `${Math.round(devPercent)}%`;
+    }
+  }
+
+  function updateTargetDisplay() {
     const targetMinutes = parseFloat(targetTimeInput.value);
-    const devPercent = calculateDevelopmentPercentage(
-      developmentTime,
-      targetMinutes,
-    );
-    devPercentDisplay.textContent = `${Math.round(devPercent)}%`;
+    const targetSeconds = Math.round(targetMinutes * 60);
+    targetDisplay.textContent = formatTime(targetSeconds);
   }
-}
 
-function updateTargetDisplay() {
-  const targetMinutes = parseFloat(targetTimeInput.value);
-  const targetSeconds = Math.round(targetMinutes * 60);
-  targetDisplay.textContent = formatTime(targetSeconds);
-}
+  function startTimer() {
+    if (!isRunning) {
+      isRunning = true;
+      startBtn.style.display = "none";
+      pauseBtn.style.display = "block";
+      crackBtn.disabled = false;
 
-function startTimer() {
-  if (!isRunning) {
-    isRunning = true;
-    startBtn.style.display = "none";
-    pauseBtn.style.display = "block";
-    crackBtn.disabled = false;
-
-    intervalId = setInterval(() => {
-      elapsedSeconds++;
-      updateDisplay();
-    }, 1000);
+      intervalId = setInterval(() => {
+        elapsedSeconds++;
+        updateDisplay();
+      }, 1000);
+    }
   }
-}
 
-function pauseTimer() {
-  if (isRunning) {
-    isRunning = false;
-    startBtn.style.display = "block";
-    pauseBtn.style.display = "none";
-    clearInterval(intervalId);
+  function pauseTimer() {
+    if (isRunning) {
+      isRunning = false;
+      startBtn.style.display = "block";
+      pauseBtn.style.display = "none";
+      clearInterval(intervalId);
+    }
   }
-}
 
-function resetTimer() {
-  pauseTimer();
-  elapsedSeconds = 0;
-  firstCrackTime = null;
-  crackBtn.disabled = true;
-  crackBtn.textContent = "Marquer Premier Crack";
-  crackBtn.style.background =
-    "linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)";
-  timerDisplay.textContent = "00:00";
-  crackTimeDisplay.textContent = "--:--";
-  devTimeDisplay.textContent = "--:--";
-  devPercentDisplay.textContent = "--%";
-}
-
-function markFirstCrack() {
-  if (isRunning && firstCrackTime === null) {
-    firstCrackTime = elapsedSeconds;
-    crackTimeDisplay.textContent = formatTime(firstCrackTime);
-    crackBtn.textContent = "✓ Premier Crack Marqué";
+  function resetTimer() {
+    pauseTimer();
+    elapsedSeconds = 0;
+    firstCrackTime = null;
     crackBtn.disabled = true;
+    crackBtn.textContent = "Marquer Premier Crack";
     crackBtn.style.background =
-      "linear-gradient(135deg, #6b7280 0%, #4b5563 100%)";
+      "linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)";
+    timerDisplay.textContent = "00:00";
+    crackTimeDisplay.textContent = "--:--";
+    devTimeDisplay.textContent = "--:--";
+    devPercentDisplay.textContent = "--%";
+  }
+
+  function markFirstCrack() {
+    if (isRunning && firstCrackTime === null) {
+      firstCrackTime = elapsedSeconds;
+      crackTimeDisplay.textContent = formatTime(firstCrackTime);
+      crackBtn.textContent = "✓ Premier Crack Marqué";
+      crackBtn.disabled = true;
+      crackBtn.style.background =
+        "linear-gradient(135deg, #6b7280 0%, #4b5563 100%)";
+    }
+  }
+
+  // Event listeners
+  startBtn.addEventListener("click", startTimer);
+  pauseBtn.addEventListener("click", pauseTimer);
+  resetBtn.addEventListener("click", resetTimer);
+  crackBtn.addEventListener("click", markFirstCrack);
+  targetTimeInput.addEventListener("input", updateTargetDisplay);
+
+  // Initialization
+  updateTargetDisplay();
+}
+
+// Initialize when DOM is ready (browser only)
+if (typeof document !== "undefined") {
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initializeTimer);
+  } else {
+    initializeTimer();
   }
 }
 
-// Event listeners
-startBtn.addEventListener("click", startTimer);
-pauseBtn.addEventListener("click", pauseTimer);
-resetBtn.addEventListener("click", resetTimer);
-crackBtn.addEventListener("click", markFirstCrack);
-targetTimeInput.addEventListener("input", updateTargetDisplay);
-
-// Initialization
-updateTargetDisplay();
-
-// Export functions for testing
+// Export functions for testing (Node.js)
 if (typeof module !== "undefined" && module.exports) {
   module.exports = {
     formatTime,
