@@ -3,7 +3,7 @@
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>Roaster tycoon</title>
+        <title>Suivi de Torréfaction</title>
         <style>
             * {
                 margin: 0;
@@ -152,6 +152,39 @@
                 color: #34d399;
             }
 
+            .target-time-section {
+                margin-bottom: 20px;
+                text-align: center;
+            }
+
+            .target-label {
+                display: block;
+                font-size: 14px;
+                color: #d1d5db;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+                margin-bottom: 8px;
+            }
+
+            #targetTime {
+                width: 120px;
+                padding: 12px;
+                font-size: 18px;
+                font-weight: 600;
+                text-align: center;
+                background: rgba(255, 255, 255, 0.1);
+                border: 2px solid rgba(255, 255, 255, 0.2);
+                border-radius: 8px;
+                color: #fff;
+                font-family: "Courier New", monospace;
+            }
+
+            #targetTime:focus {
+                outline: none;
+                border-color: #8b5cf6;
+                background: rgba(255, 255, 255, 0.15);
+            }
+
             @media (max-width: 480px) {
                 .container {
                     padding: 24px;
@@ -181,6 +214,20 @@
                 <button class="btn-reset" id="resetBtn">Reset</button>
             </div>
 
+            <div class="target-time-section">
+                <label for="targetTime" class="target-label"
+                    >Temps Total Cible (minutes)</label
+                >
+                <input
+                    type="number"
+                    id="targetTime"
+                    min="1"
+                    max="30"
+                    value="12"
+                    step="0.5"
+                />
+            </div>
+
             <button class="btn-crack" id="crackBtn" disabled>
                 Marquer Premier Crack
             </button>
@@ -197,6 +244,16 @@
                     <span class="info-value development" id="devTime"
                         >--:--</span
                     >
+                </div>
+                <div class="info-row">
+                    <span class="info-label">% Développement</span>
+                    <span class="info-value development" id="devPercent"
+                        >--%</span
+                    >
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Temps Total Cible</span>
+                    <span class="info-value" id="targetDisplay">12:00</span>
                 </div>
             </div>
         </div>
@@ -216,6 +273,9 @@
             const crackBtn = document.getElementById("crackBtn");
             const crackTimeDisplay = document.getElementById("crackTime");
             const devTimeDisplay = document.getElementById("devTime");
+            const devPercentDisplay = document.getElementById("devPercent");
+            const targetTimeInput = document.getElementById("targetTime");
+            const targetDisplay = document.getElementById("targetDisplay");
 
             function formatTime(seconds) {
                 const mins = Math.floor(seconds / 60);
@@ -229,7 +289,19 @@
                 if (firstCrackTime !== null) {
                     const developmentTime = elapsedSeconds - firstCrackTime;
                     devTimeDisplay.textContent = formatTime(developmentTime);
+
+                    // Calcul du pourcentage de développement
+                    const targetSeconds =
+                        parseFloat(targetTimeInput.value) * 60;
+                    const devPercent = (developmentTime / targetSeconds) * 100;
+                    devPercentDisplay.textContent = `${Math.round(devPercent)}%`;
                 }
+            }
+
+            function updateTargetDisplay() {
+                const targetMinutes = parseFloat(targetTimeInput.value);
+                const targetSeconds = Math.round(targetMinutes * 60);
+                targetDisplay.textContent = formatTime(targetSeconds);
             }
 
             function startTimer() {
@@ -260,9 +332,13 @@
                 elapsedSeconds = 0;
                 firstCrackTime = null;
                 crackBtn.disabled = true;
+                crackBtn.textContent = "Marquer Premier Crack";
+                crackBtn.style.background =
+                    "linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)";
                 timerDisplay.textContent = "00:00";
                 crackTimeDisplay.textContent = "--:--";
                 devTimeDisplay.textContent = "--:--";
+                devPercentDisplay.textContent = "--%";
             }
 
             function markFirstCrack() {
@@ -280,6 +356,10 @@
             pauseBtn.addEventListener("click", pauseTimer);
             resetBtn.addEventListener("click", resetTimer);
             crackBtn.addEventListener("click", markFirstCrack);
+            targetTimeInput.addEventListener("input", updateTargetDisplay);
+
+            // Initialisation
+            updateTargetDisplay();
         </script>
     </body>
 </html>
