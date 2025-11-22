@@ -264,12 +264,22 @@ function initializeTimer() {
     if (newTheme === "light") {
       document.body.classList.add("light-mode");
       themeToggle.textContent = "🌙";
+      updateThemeColor("#f5e6d3");
     } else {
       document.body.classList.remove("light-mode");
       themeToggle.textContent = "☀️";
+      updateThemeColor("#2c1810");
     }
 
     localStorage.setItem("preferredTheme", newTheme);
+  }
+
+  function updateThemeColor(color) {
+    // Update theme-color meta tags dynamically
+    let metaThemeColor = document.querySelector('meta[name="theme-color"]');
+    if (metaThemeColor) {
+      metaThemeColor.setAttribute("content", color);
+    }
   }
 
   function applyTheme() {
@@ -277,8 +287,10 @@ function initializeTimer() {
     if (savedTheme === "light") {
       document.body.classList.add("light-mode");
       themeToggle.textContent = "🌙";
+      updateThemeColor("#f5e6d3");
     } else {
       themeToggle.textContent = "☀️";
+      updateThemeColor("#2c1810");
     }
   }
 
