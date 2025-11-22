@@ -197,6 +197,9 @@ function initializeTimer() {
       pauseBtn.style.display = "block";
       crackBtn.disabled = false;
 
+      // Request wake lock when timer starts
+      requestWakeLock();
+
       intervalId = setInterval(() => {
         elapsedSeconds++;
         updateDisplay();
@@ -210,6 +213,9 @@ function initializeTimer() {
       startBtn.style.display = "block";
       pauseBtn.style.display = "none";
       clearInterval(intervalId);
+
+      // Release wake lock when timer pauses
+      releaseWakeLock();
     }
   }
 
