@@ -146,6 +146,7 @@ function initializeTimer() {
   const targetDisplay = document.getElementById("targetDisplay");
   const targetLabel = document.querySelector(".target-label");
   const langToggle = document.getElementById("langToggle");
+  const themeToggle = document.getElementById("themeToggle");
 
   // Apply initial translations
   function applyTranslations() {
@@ -254,6 +255,33 @@ function initializeTimer() {
     location.reload();
   }
 
+  function toggleTheme() {
+    const currentTheme = document.body.classList.contains("light-mode")
+      ? "light"
+      : "dark";
+    const newTheme = currentTheme === "dark" ? "light" : "dark";
+
+    if (newTheme === "light") {
+      document.body.classList.add("light-mode");
+      themeToggle.textContent = "🌙";
+    } else {
+      document.body.classList.remove("light-mode");
+      themeToggle.textContent = "☀️";
+    }
+
+    localStorage.setItem("preferredTheme", newTheme);
+  }
+
+  function applyTheme() {
+    const savedTheme = localStorage.getItem("preferredTheme") || "dark";
+    if (savedTheme === "light") {
+      document.body.classList.add("light-mode");
+      themeToggle.textContent = "🌙";
+    } else {
+      themeToggle.textContent = "☀️";
+    }
+  }
+
   // Event listeners
   startBtn.addEventListener("click", startTimer);
   pauseBtn.addEventListener("click", pauseTimer);
@@ -261,9 +289,11 @@ function initializeTimer() {
   crackBtn.addEventListener("click", markFirstCrack);
   targetTimeInput.addEventListener("input", updateTargetDisplay);
   langToggle.addEventListener("click", toggleLanguage);
+  themeToggle.addEventListener("click", toggleTheme);
 
   // Initialization
   applyTranslations();
+  applyTheme();
   updateTargetDisplay();
 }
 
