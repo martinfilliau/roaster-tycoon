@@ -9,10 +9,14 @@ const translations = {
     targetLabel: "Temps Total Cible (minutes)",
     markCrack: "Marquer Premier Crack",
     crackMarked: "✓ Premier Crack Marqué",
+    markDrop: "Marquer Drop (Fin)",
+    dropMarked: "✓ Drop Marqué",
     firstCrack: "Premier Crack",
     developmentTime: "Temps de Développement",
     developmentPercent: "% Développement",
     targetTotal: "Temps Total Cible",
+    dropTime: "Drop (Fin)",
+    coolingTime: "Temps de Refroidissement",
   },
   en: {
     title: "☕ Coffee Roast Tracker",
@@ -22,10 +26,14 @@ const translations = {
     targetLabel: "Target Total Time (minutes)",
     markCrack: "Mark First Crack",
     crackMarked: "✓ First Crack Marked",
+    markDrop: "Mark Drop (End)",
+    dropMarked: "✓ Drop Marked",
     firstCrack: "First Crack",
     developmentTime: "Development Time",
     developmentPercent: "% Development",
     targetTotal: "Target Total Time",
+    dropTime: "Drop (End)",
+    coolingTime: "Cooling Time",
   },
 };
 
@@ -131,6 +139,7 @@ function initializeTimer() {
   let isRunning = false;
   let intervalId = null;
   let firstCrackTime = null;
+  let dropTime = null;
 
   // DOM elements
   const titleElement = document.querySelector("h1");
@@ -139,9 +148,12 @@ function initializeTimer() {
   const pauseBtn = document.getElementById("pauseBtn");
   const resetBtn = document.getElementById("resetBtn");
   const crackBtn = document.getElementById("crackBtn");
+  const dropBtn = document.getElementById("dropBtn");
   const crackTimeDisplay = document.getElementById("crackTime");
   const devTimeDisplay = document.getElementById("devTime");
   const devPercentDisplay = document.getElementById("devPercent");
+  const dropTimeDisplay = document.getElementById("dropTime");
+  const coolingTimeDisplay = document.getElementById("coolingTime");
   const targetTimeInput = document.getElementById("targetTime");
   const targetDisplay = document.getElementById("targetDisplay");
   const targetLabel = document.querySelector(".target-label");
@@ -156,12 +168,15 @@ function initializeTimer() {
     resetBtn.textContent = t.reset;
     targetLabel.textContent = t.targetLabel;
     crackBtn.textContent = t.markCrack;
+    dropBtn.textContent = t.markDrop;
 
     document.querySelectorAll(".info-label")[0].textContent = t.firstCrack;
     document.querySelectorAll(".info-label")[1].textContent = t.developmentTime;
     document.querySelectorAll(".info-label")[2].textContent =
       t.developmentPercent;
-    document.querySelectorAll(".info-label")[3].textContent = t.targetTotal;
+    document.querySelectorAll(".info-label")[3].textContent = t.dropTime;
+    document.querySelectorAll(".info-label")[4].textContent = t.coolingTime;
+    document.querySelectorAll(".info-label")[5].textContent = t.targetTotal;
 
     langToggle.textContent = lang === "fr" ? "EN" : "FR";
   }
@@ -170,10 +185,9 @@ function initializeTimer() {
     timerDisplay.textContent = formatTime(elapsedSeconds);
 
     if (firstCrackTime !== null) {
-      const developmentTime = calculateDevelopmentTime(
-        elapsedSeconds,
-        firstCrackTime,
-      );
+      // Calculate development time (from first crack to drop or current time)
+      const endTime = dropTime !== null ? dropTime : elapsedSeconds;
+      const developmentTime = calculateDevelopmentTime(endTime, firstCrackTime);
       devTimeDisplay.textContent = formatTime(developmentTime);
 
       const targetMinutes = parseFloat(targetTimeInput.value);
@@ -182,6 +196,12 @@ function initializeTimer() {
         targetMinutes,
       );
       devPercentDisplay.textContent = `${Math.round(devPercent)}%`;
+    }
+
+    if (dropTime !== null) {
+      // Calculate cooling time (from drop to current time)
+      const coolingTime = elapsedSeconds - dropTime;
+      coolingTimeDisplay.textContent = formatTime(coolingTime);
     }
   }
 
@@ -224,14 +244,21 @@ function initializeTimer() {
     pauseTimer();
     elapsedSeconds = 0;
     firstCrackTime = null;
+    dropTime = null;
     crackBtn.disabled = true;
+    dropBtn.disabled = true;
     crackBtn.textContent = t.markCrack;
+    dropBtn.textContent = t.markDrop;
     crackBtn.style.background =
       "linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)";
+    dropBtn.style.background =
+      "linear-gradient(135deg, #ec4899 0%, #db2777 100%)";
     timerDisplay.textContent = "00:00";
     crackTimeDisplay.textContent = "--:--";
     devTimeDisplay.textContent = "--:--";
     devPercentDisplay.textContent = "--%";
+    dropTimeDisplay.textContent = "--:--";
+    coolingTimeDisplay.textContent = "--:--";
 
     // Ensure wake lock is released on reset
     releaseWakeLock();
@@ -245,6 +272,23 @@ function initializeTimer() {
       crackBtn.disabled = true;
       crackBtn.style.background =
         "linear-gradient(135deg, #6b7280 0%, #4b5563 100%)";
+
+      // Enable drop button after first crack is marked
+      dropBtn.disabled = false;
+    }
+  }
+
+  function markDrop() {
+    if (isRunning && firstCrackTime !== null && dropTime === null) {
+      dropTime = elapsedSeconds;
+      dropTimeDisplay.textContent = formatTime(dropTime);
+      dropBtn.textContent = t.dropMarked;
+      dropBtn.disabled = true;
+      dropBtn.style.background =
+        "linear-gradient(135deg, #6b7280 0%, #4b5563 100%)";
+
+      // Update display to freeze development time
+      updateDisplay();
     }
   }
 
@@ -299,6 +343,7 @@ function initializeTimer() {
   pauseBtn.addEventListener("click", pauseTimer);
   resetBtn.addEventListener("click", resetTimer);
   crackBtn.addEventListener("click", markFirstCrack);
+  dropBtn.addEventListener("click", markDrop);
   targetTimeInput.addEventListener("input", updateTargetDisplay);
   langToggle.addEventListener("click", toggleLanguage);
   themeToggle.addEventListener("click", toggleTheme);
